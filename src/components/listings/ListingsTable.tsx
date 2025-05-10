@@ -1,4 +1,3 @@
-
 import { PenLine, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +22,7 @@ export interface Listing {
   vendorEmail: string;
   status: "in-stock" | "out-stock" | "low-stock";
   image?: string;
+  owner_id?: string; // Added owner_id field
 }
 
 interface ListingsTableProps {
@@ -41,13 +41,14 @@ export function ListingsTable({ listings, onEdit, onDelete }: ListingsTableProps
             <TableHead>Price</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Owner ID</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {listings.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+              <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
                 No listings found.
               </TableCell>
             </TableRow>
@@ -86,6 +87,7 @@ export function ListingsTable({ listings, onEdit, onDelete }: ListingsTableProps
                   </Badge>
                 </TableCell>
                 <TableCell>{listing.category}</TableCell>
+                <TableCell>{listing.owner_id || "N/A"}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     onClick={() => onEdit(listing)}

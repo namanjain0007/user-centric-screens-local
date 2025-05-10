@@ -1,4 +1,3 @@
-
 // Mock data for listings
 export const mockListings = [
   {
@@ -12,6 +11,7 @@ export const mockListings = [
     availableUntil: new Date("2023-12-31"),
     vendorEmail: "green@example.com",
     status: "out-of-stock",
+    owner_id: "USR001"
   },
   {
     id: 2,
@@ -24,6 +24,7 @@ export const mockListings = [
     availableUntil: new Date("2023-11-15"),
     vendorEmail: "stationery@example.com",
     status: "in-stock",
+    owner_id: "USR002"
   },
   {
     id: 3,
@@ -35,6 +36,7 @@ export const mockListings = [
     availableUntil: new Date("2023-10-31"),
     vendorEmail: "camera@example.com",
     status: "coming-soon",
+    owner_id: "USR003"
   },
   {
     id: 4,
@@ -46,6 +48,7 @@ export const mockListings = [
     availableUntil: new Date("2023-12-15"),
     vendorEmail: "watches@example.com",
     status: "out-of-stock",
+    owner_id: "USR001"
   },
   {
     id: 5,
@@ -57,6 +60,7 @@ export const mockListings = [
     availableUntil: new Date("2023-11-30"),
     vendorEmail: "audio@example.com",
     status: "in-stock",
+    owner_id: "USR002"
   },
   {
     id: 6,
@@ -68,6 +72,7 @@ export const mockListings = [
     availableUntil: new Date("2023-09-30"),
     vendorEmail: "eyewear@example.com",
     status: "coming-soon",
+    owner_id: "USR003"
   },
   {
     id: 7,
@@ -79,6 +84,7 @@ export const mockListings = [
     availableUntil: new Date("2023-12-31"),
     vendorEmail: "gaming@example.com",
     status: "out-of-stock",
+    owner_id: "USR001"
   },
   {
     id: 8,
@@ -90,6 +96,7 @@ export const mockListings = [
     availableUntil: new Date("2023-11-30"),
     vendorEmail: "audio@example.com",
     status: "in-stock",
+    owner_id: "USR002"
   },
 ];
 

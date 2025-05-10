@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -70,6 +69,11 @@ export default function ListingsPage() {
     // Apply location filter
     if (filters.location) {
       filtered = filtered.filter(item => item.location === filters.location);
+    }
+
+    // Apply owner_id filter
+    if (filters.owner_id) {
+      filtered = filtered.filter(item => item.owner_id === filters.owner_id);
     }
 
     // Apply date range filter
@@ -153,6 +157,7 @@ export default function ListingsPage() {
         vendorEmail: "new@example.com", // Default vendor email
         status: "in-stock", // Default status
         image: data.image,
+        owner_id: "USR001", // Default owner_id
       };
       setListings([...listings, newListing]);
     }

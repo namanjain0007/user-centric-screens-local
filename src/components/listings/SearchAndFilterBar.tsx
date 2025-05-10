@@ -1,4 +1,3 @@
-
 import { Plus, Filter, Search, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,17 +34,16 @@ import {
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 
-// Define the FilterValues interface to match what ListingsPage expects
 export interface FilterValues {
   category?: string;
   location?: string;
+  owner_id?: string;
   dateRange?: {
     from?: Date;
     to?: Date;
   };
 }
 
-// Define the props for the SearchAndFilterBar component
 interface SearchAndFilterBarProps {
   categories: string[];
   locations: string[];
@@ -56,6 +54,16 @@ interface SearchAndFilterBarProps {
   sortOption: string;
   onAddListing: () => void;
 }
+
+const formSchema = z.object({
+  category: z.string().optional(),
+  location: z.string().optional(),
+  owner_id: z.string().optional(),
+  dateRange: z.object({
+    from: z.date().optional(),
+    to: z.date().optional(),
+  }).optional(),
+});
 
 export function SearchAndFilterBar({
   categories,
@@ -69,22 +77,12 @@ export function SearchAndFilterBar({
 }: SearchAndFilterBarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Define form schema
-  const formSchema = z.object({
-    category: z.string().optional(),
-    location: z.string().optional(),
-    dateRange: z.object({
-      from: z.date().optional(),
-      to: z.date().optional(),
-    }).optional(),
-  });
-
-  // Initialize form
   const form = useForm<FilterValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       category: undefined,
       location: undefined,
+      owner_id: undefined,
       dateRange: {
         from: undefined,
         to: undefined,
@@ -92,7 +90,6 @@ export function SearchAndFilterBar({
     },
   });
 
-  // Submit handler
   const onSubmit = (data: FilterValues) => {
     onFilterSubmit(data);
     setFilterOpen(false);
@@ -174,6 +171,22 @@ export function SearchAndFilterBar({
                             ))}
                           </SelectContent>
                         </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="owner_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Owner ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter owner ID"
+                            {...field}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />
