@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -48,6 +48,8 @@ const listingSchema = z.object({
     required_error: "Available until date is required",
   }),
   image: z.any().optional(),
+  owner_id: z.number().optional(),
+  listing_id: z.number().optional(),
 });
 
 export type ListingFormValues = z.infer<typeof listingSchema>;
@@ -58,6 +60,7 @@ interface ListingFormModalProps {
   onSubmit: (data: ListingFormValues) => void;
   initialValues?: Partial<ListingFormValues>;
   isEditing?: boolean;
+  owners?: { id: number; name: string }[];
 }
 
 export function ListingFormModal({
@@ -66,11 +69,12 @@ export function ListingFormModal({
   onSubmit,
   initialValues,
   isEditing = false,
+  owners = [],
 }: ListingFormModalProps) {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  
+  const [imagePreview, setImagePreview] = useState<string | null>(initialValues?.image || null);
+
   // Categories from our mock data
-  const categories = ["Plant", "Gadget", "Electronic"];
+  const categories = ["Plant", "Gadget", "Electronic", "Furniture", "Clothing", "Books", "Sports"];
 
   // Initialize the form with default values or editing values
   const form = useForm<ListingFormValues>({
@@ -84,8 +88,21 @@ export function ListingFormModal({
       availableFrom: initialValues?.availableFrom || new Date(),
       availableUntil: initialValues?.availableUntil || new Date(),
       image: initialValues?.image || null,
+      owner_id: initialValues?.owner_id || 1, // Default owner ID
+      listing_id: initialValues?.listing_id,
     },
   });
+
+  // Update form values and image preview when initialValues change
+  useEffect(() => {
+    if (open && initialValues) {
+      // Reset the form with the new values
+      form.reset(initialValues);
+
+      // Set image preview if available
+      setImagePreview(initialValues.image || null);
+    }
+  }, [open, initialValues, form]);
 
   // Handle image upload
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,7 +128,7 @@ export function ListingFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-6">
+      <DialogContent className="sm:max-w-[600px] p-6 max-h-[90vh] overflow-y-auto" style={{ maxHeight: "90vh" }}>
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">
             {isEditing ? "Edit Listing" : "Add New Listing"}
@@ -131,10 +148,10 @@ export function ListingFormModal({
                 <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer hover:bg-gray-50 transition-colors">
                   {imagePreview ? (
                     <div className="relative w-full">
-                      <img 
-                        src={imagePreview} 
-                        alt="Preview" 
-                        className="mx-auto h-48 object-contain rounded-md" 
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="mx-auto h-48 object-contain rounded-md"
                       />
                       <Button
                         type="button"
@@ -150,8 +167,8 @@ export function ListingFormModal({
                       </Button>
                     </div>
                   ) : (
-                    <Label 
-                      htmlFor="image-upload" 
+                    <Label
+                      htmlFor="image-upload"
                       className="flex flex-col items-center justify-center w-full h-32 cursor-pointer"
                     >
                       <ImagePlus className="h-10 w-10 text-gray-400 mb-2" />
@@ -236,7 +253,7 @@ export function ListingFormModal({
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
                         {...field}
                       >
-                        <option value="" disabled>Select category</option>
+                        <option key="select-category" value="" disabled>Select category</option>
                         {categories.map((category) => (
                           <option key={category} value={category}>
                             {category}
@@ -259,6 +276,33 @@ export function ListingFormModal({
                     <FormControl>
                       <Input placeholder="City, State" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Owner ID */}
+              <FormField
+                control={form.control}
+                name="owner_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Owner ID</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Owner ID"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        readOnly={isEditing}
+                        className={isEditing ? "bg-gray-100 cursor-not-allowed" : ""}
+                      />
+                    </FormControl>
+                    {isEditing && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Owner ID cannot be changed when editing a listing
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -290,7 +334,7 @@ export function ListingFormModal({
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={5}>
                         <Calendar
                           mode="single"
                           selected={field.value}
@@ -331,7 +375,7 @@ export function ListingFormModal({
                           </Button>
                         </FormControl>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={5}>
                         <Calendar
                           mode="single"
                           selected={field.value}
@@ -347,10 +391,10 @@ export function ListingFormModal({
               />
             </div>
 
-            <DialogFooter className="flex justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+            <DialogFooter className="flex justify-end gap-2 sticky bottom-0 pt-4 bg-white">
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => onOpenChange(false)}
               >
                 Cancel

@@ -97,10 +97,10 @@ export function PricingPlanModal({
                 <SelectValue placeholder="Select duration" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="30">Monthly (30 days)</SelectItem>
-                <SelectItem value="90">Quarterly (90 days)</SelectItem>
-                <SelectItem value="180">Six Month (180 days)</SelectItem>
-                <SelectItem value="365">Yearly (365 days)</SelectItem>
+                <SelectItem key="monthly" value="30">Monthly (30 days)</SelectItem>
+                <SelectItem key="quarterly" value="90">Quarterly (90 days)</SelectItem>
+                <SelectItem key="six-month" value="180">Six Month (180 days)</SelectItem>
+                <SelectItem key="yearly" value="365">Yearly (365 days)</SelectItem>
               </SelectContent>
             </Select>
           </div>

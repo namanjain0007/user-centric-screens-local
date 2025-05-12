@@ -1,16 +1,21 @@
 
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CheckIcon, ChevronLeft, X } from "lucide-react";
+import { CheckIcon, ChevronLeft, X, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Notification, formatNotificationDate } from "@/types/notification";
+import { getNotifications, deleteNotification } from "@/services/notificationService";
+import { toast } from "@/components/ui/sonner";
 
 interface NotificationsPanelProps {
   onClose: () => void;
 }
 
+// Interface for frontend notification display
 interface NotificationItem {
-  id: string;
-  type: "leave" | "contract" | "meeting" | "renewal" | "team" | "submitted";
+  id: number;
+  type: string;
   title: string;
   date: string;
   time: string;
@@ -21,75 +26,88 @@ interface NotificationItem {
   isUnread: boolean;
 }
 
-const notifications: NotificationItem[] = [
-  {
-    id: "1",
-    type: "leave",
-    title: "John Doe has submitted a leave request for July 25-27, 2024",
-    date: "July 16, 2024",
-    time: "09:00 PM",
-    user: {
-      name: "John Doe",
-      avatar: "/lovable-uploads/5f951dde-d045-4b18-a3a9-a23d39486e7f.png",
-    },
-    isUnread: true,
-  },
-  {
-    id: "2",
-    type: "contract",
-    title: "Michael Brown's contract is up for renewal on July 21, 2024",
-    date: "July 16, 2024",
-    time: "05:10 PM",
-    isUnread: true,
-  },
-  {
-    id: "3",
-    type: "meeting",
-    title: "Emily Davis has set up a meeting for July 20, 2024, at 3:00 PM",
-    date: "July 16, 2024",
-    time: "03:47 PM",
-    isUnread: true,
-  },
-  {
-    id: "4",
-    type: "meeting",
-    title: "Matthew Martinez has scheduled a meeting for July 23, 2024",
-    date: "July 16, 2024",
-    time: "11:30 AM",
-    isUnread: true,
-  },
-  {
-    id: "5",
-    type: "renewal",
-    title: "Nnifer Harris's contract renewal is up for review on November 10",
-    date: "July 16, 2024",
-    time: "10:00 AM",
-    isUnread: true,
-  },
-  {
-    id: "6",
-    type: "team",
-    title: "Anthony White has been added to the team as of today",
-    date: "July 15, 2024",
-    time: "04:30 PM",
-    user: {
-      name: "Anthony White",
-      avatar: "/lovable-uploads/dc809dc8-3f55-44be-b25a-718640398bf5.png",
-    },
-    isUnread: false,
-  },
-  {
-    id: "7",
-    type: "submitted",
-    title: "Sarah Johnson's contract renewal has been submitted for review",
-    date: "July 15, 2024",
-    time: "01:52 PM",
-    isUnread: false,
-  },
-];
-
 export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
-  const unreadCount = notifications.filter((n) => n.isUnread).length;
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'unread'>('all');
+
+  // Fetch notifications from API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getNotifications();
+
+        // Map API notifications to display format
+        const displayNotifications = data.map((notification): NotificationItem => {
+          const { date, time } = formatNotificationDate(notification.created_at);
+
+          // Extract title from message or use type as fallback
+          const title = notification.type.charAt(0).toUpperCase() + notification.type.slice(1);
+
+          return {
+            id: notification.id,
+            type: notification.type,
+            title: notification.message,
+            date,
+            time,
+            isUnread: !notification.is_read,
+            // We don't have user info in the notification API response
+            user: undefined
+          };
+        });
+
+        setNotifications(displayNotifications);
+      } catch (error) {
+        console.error('Failed to fetch notifications:', error);
+        toast.error('Failed to load notifications');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  // Handle notification deletion
+  const handleDeleteNotification = async (id: number) => {
+    try {
+      await deleteNotification(id);
+      setNotifications(notifications.filter(n => n.id !== id));
+      toast.success('Notification deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+      toast.error('Failed to delete notification');
+    }
+  };
+
+  // Filter notifications based on active filter
+  const filteredNotifications = activeFilter === 'all'
+    ? notifications
+    : notifications.filter(n => n.isUnread);
+
+  // Group notifications by date
+  const today = new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayFormatted = yesterday.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+
+  const todayNotifications = filteredNotifications.filter(n => n.date === today);
+  const yesterdayNotifications = filteredNotifications.filter(n => n.date === yesterdayFormatted);
+  const olderNotifications = filteredNotifications.filter(n =>
+    n.date !== today && n.date !== yesterdayFormatted
+  );
+
+  const unreadCount = notifications.filter(n => n.isUnread).length;
 
   return (
     <div className="flex h-full flex-col">
@@ -122,10 +140,20 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
 
       <div className="flex items-center justify-between border-b py-2 px-4">
         <div className="flex gap-2">
-          <Button variant="outline" className="text-sm h-8" size="sm">
+          <Button
+            variant={activeFilter === 'all' ? "outline" : "ghost"}
+            className="text-sm h-8"
+            size="sm"
+            onClick={() => setActiveFilter('all')}
+          >
             All
           </Button>
-          <Button variant="ghost" className="text-sm h-8" size="sm">
+          <Button
+            variant={activeFilter === 'unread' ? "outline" : "ghost"}
+            className="text-sm h-8"
+            size="sm"
+            onClick={() => setActiveFilter('unread')}
+          >
             Unread ({unreadCount})
           </Button>
         </div>
@@ -135,33 +163,78 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="py-3 px-4">
-          <h3 className="mb-2 text-sm font-medium text-muted-foreground">Today</h3>
-          <div className="space-y-4">
-            {notifications
-              .filter((n) => n.date.includes("July 16"))
-              .map((notification) => (
-                <NotificationCard key={notification.id} notification={notification} />
-              ))}
+        {isLoading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No notifications found
+          </div>
+        ) : (
+          <div className="py-3 px-4">
+            {todayNotifications.length > 0 && (
+              <>
+                <h3 className="mb-2 text-sm font-medium text-muted-foreground">Today</h3>
+                <div className="space-y-4">
+                  {todayNotifications.map((notification) => (
+                    <NotificationCard
+                      key={notification.id}
+                      notification={notification}
+                      onDelete={handleDeleteNotification}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
 
-          <h3 className="mb-2 mt-6 text-sm font-medium text-muted-foreground">
-            Yesterday
-          </h3>
-          <div className="space-y-4">
-            {notifications
-              .filter((n) => n.date.includes("July 15"))
-              .map((notification) => (
-                <NotificationCard key={notification.id} notification={notification} />
-              ))}
+            {yesterdayNotifications.length > 0 && (
+              <>
+                <h3 className="mb-2 mt-6 text-sm font-medium text-muted-foreground">
+                  Yesterday
+                </h3>
+                <div className="space-y-4">
+                  {yesterdayNotifications.map((notification) => (
+                    <NotificationCard
+                      key={notification.id}
+                      notification={notification}
+                      onDelete={handleDeleteNotification}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
+            {olderNotifications.length > 0 && (
+              <>
+                <h3 className="mb-2 mt-6 text-sm font-medium text-muted-foreground">
+                  Older
+                </h3>
+                <div className="space-y-4">
+                  {olderNotifications.map((notification) => (
+                    <NotificationCard
+                      key={notification.id}
+                      notification={notification}
+                      onDelete={handleDeleteNotification}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-        </div>
+        )}
       </ScrollArea>
     </div>
   );
 }
 
-function NotificationCard({ notification }: { notification: NotificationItem }) {
+function NotificationCard({
+  notification,
+  onDelete
+}: {
+  notification: NotificationItem;
+  onDelete: (id: number) => void;
+}) {
   return (
     <div
       className={`relative flex gap-3 rounded-lg border p-3 transition-colors ${
@@ -193,10 +266,20 @@ function NotificationCard({ notification }: { notification: NotificationItem }) 
         </p>
       </div>
 
-      {/* Unread indicator */}
-      {notification.isUnread && (
-        <div className="absolute right-3 top-3 h-2 w-2 rounded-full bg-brand-red"></div>
-      )}
+      {/* Actions */}
+      <div className="flex flex-col items-center gap-2">
+        {notification.isUnread && (
+          <div className="h-2 w-2 rounded-full bg-brand-red"></div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 text-muted-foreground hover:text-destructive"
+          onClick={() => onDelete(notification.id)}
+        >
+          <Trash2 className="h-3 w-3" />
+        </Button>
+      </div>
     </div>
   );
 }

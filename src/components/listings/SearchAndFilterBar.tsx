@@ -1,4 +1,4 @@
-import { Plus, Filter, Search, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Filter, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -80,9 +80,9 @@ export function SearchAndFilterBar({
   const form = useForm<FilterValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      category: undefined,
-      location: undefined,
-      owner_id: undefined,
+      category: "all-categories",
+      location: "all-locations",
+      owner_id: "",
       dateRange: {
         from: undefined,
         to: undefined,
@@ -108,7 +108,7 @@ export function SearchAndFilterBar({
               onChange={onSearchChange}
             />
           </div>
-          
+
           <Popover open={filterOpen} onOpenChange={setFilterOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -135,7 +135,7 @@ export function SearchAndFilterBar({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">All Categories</SelectItem>
+                            <SelectItem key="all-categories" value="all-categories">All Categories</SelectItem>
                             {categories.map((category) => (
                               <SelectItem key={category} value={category}>
                                 {category}
@@ -163,7 +163,7 @@ export function SearchAndFilterBar({
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">All Locations</SelectItem>
+                            <SelectItem key="all-locations" value="all-locations">All Locations</SelectItem>
                             {locations.map((location) => (
                               <SelectItem key={location} value={location}>
                                 {location}
@@ -246,9 +246,9 @@ export function SearchAndFilterBar({
                   />
 
                   <div className="flex justify-end gap-2">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       onClick={() => {
                         form.reset();
                         onFilterSubmit({});
@@ -262,7 +262,7 @@ export function SearchAndFilterBar({
               </Form>
             </PopoverContent>
           </Popover>
-          
+
           <Select value={sortOption} onValueChange={onSortChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by" />
@@ -275,7 +275,7 @@ export function SearchAndFilterBar({
             </SelectContent>
           </Select>
         </div>
-        
+
         <Button onClick={onAddListing}>
           <Plus className="mr-2 h-4 w-4" />
           Add New Listing

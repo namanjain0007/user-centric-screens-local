@@ -1,11 +1,15 @@
 import { PricingPlan } from "@/types/pricingPlan";
+import { getToken } from "./authService";
 
 const API_URL = "https://rental-prime-backend.onrender.com/pricing_plans";
-const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbl9pZCI6MSwiYWRtaW5fdXNlcl90eXBlIjoic3VwZXJfYWRtaW4iLCJpYXQiOjE3NDY4NTE5ODksImV4cCI6MTc0NjkzODM4OX0.ymRftH89QPHOxnZjeJccJNExHBNh_nh6yYkSd6kXlN0";
 
-const headers = {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${AUTH_TOKEN}`,
+// Create headers with the token from sessionStorage
+const getHeaders = () => {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    "Authorization": token ? `Bearer ${token}` : "",
+  };
 };
 
 // Custom error class for authentication errors
@@ -53,9 +57,9 @@ const handleApiResponse = async (response: Response, errorMessage: string): Prom
 // Get all pricing plans
 export const getPricingPlans = async (): Promise<PricingPlan[]> => {
   try {
-    const response = await fetch(API_URL, { headers });
+    const response = await fetch(API_URL, { headers: getHeaders() });
     const data = await handleApiResponse(response, 'Failed to fetch pricing plans');
-    
+
     return data.map((plan: any) => ({
       plan_id: plan.plan_id,
       name: plan.name,
@@ -79,12 +83,12 @@ export const addPricingPlan = async (planData: {
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify(planData),
     });
 
     const data = await handleApiResponse(response, 'Failed to create pricing plan');
-    
+
     return {
       plan_id: data.plan_id,
       name: data.name,
@@ -95,7 +99,7 @@ export const addPricingPlan = async (planData: {
     };
   } catch (error) {
     console.error('Error in addPricingPlan function:', error);
-    
+
     // Check for duplicate plan error
     if (error instanceof Error &&
         (error.message.includes('duplicate') ||
@@ -103,7 +107,7 @@ export const addPricingPlan = async (planData: {
          error.message.includes('unique constraint'))) {
       throw new Error('A pricing plan with this name already exists');
     }
-    
+
     throw error;
   }
 };
@@ -120,12 +124,12 @@ export const updatePricingPlan = async (
   try {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PATCH',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify(planData),
     });
 
     const data = await handleApiResponse(response, 'Failed to update pricing plan');
-    
+
     return {
       plan_id: data.plan_id,
       name: data.name,
@@ -136,7 +140,7 @@ export const updatePricingPlan = async (
     };
   } catch (error) {
     console.error('Error in updatePricingPlan function:', error);
-    
+
     // Check for duplicate plan error
     if (error instanceof Error &&
         (error.message.includes('duplicate') ||
@@ -144,7 +148,7 @@ export const updatePricingPlan = async (
          error.message.includes('unique constraint'))) {
       throw new Error('A pricing plan with this name already exists');
     }
-    
+
     throw error;
   }
 };
@@ -154,13 +158,13 @@ export const deletePricingPlan = async (id: number): Promise<boolean> => {
   try {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
-      headers,
+      headers: getHeaders(),
     });
 
     if (response.ok) {
       return true;
     }
-    
+
     await handleApiResponse(response, 'Failed to delete pricing plan');
     return true;
   } catch (error) {

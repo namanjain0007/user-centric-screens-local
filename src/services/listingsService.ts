@@ -1,103 +1,173 @@
-// Mock data for listings
-export const mockListings = [
-  {
-    id: 1,
-    title: "Indoor Succulent Plants",
-    description: "Beautiful indoor plants that require minimal maintenance.",
-    category: "Plant",
-    location: "San Francisco",
-    price: 46,
-    availableFrom: new Date("2023-06-01"),
-    availableUntil: new Date("2023-12-31"),
-    vendorEmail: "green@example.com",
-    status: "out-of-stock",
-    owner_id: "USR001"
-  },
-  {
-    id: 2,
-    title: "Cartoon Press Pen",
-    description: "Stylish cartoon pens with smooth writing experience.",
-    category: "Gadget",
-    location: "New York",
-    price: 22,
-    availableFrom: new Date("2023-05-15"),
-    availableUntil: new Date("2023-11-15"),
-    vendorEmail: "stationery@example.com",
-    status: "in-stock",
-    owner_id: "USR002"
-  },
-  {
-    id: 3,
-    title: "Tripod Camera Stand",
-    category: "Electronic",
-    location: "Los Angeles",
-    price: 33,
-    availableFrom: new Date("2023-07-01"),
-    availableUntil: new Date("2023-10-31"),
-    vendorEmail: "camera@example.com",
-    status: "coming-soon",
-    owner_id: "USR003"
-  },
-  {
-    id: 4,
-    title: "Smart Watch for Man",
-    category: "Electronic",
-    location: "Chicago",
-    price: 225,
-    availableFrom: new Date("2023-06-15"),
-    availableUntil: new Date("2023-12-15"),
-    vendorEmail: "watches@example.com",
-    status: "out-of-stock",
-    owner_id: "USR001"
-  },
-  {
-    id: 5,
-    title: "Stylish Headphone",
-    category: "Electronic",
-    location: "Miami",
-    price: 155,
-    availableFrom: new Date("2023-05-01"),
-    availableUntil: new Date("2023-11-30"),
-    vendorEmail: "audio@example.com",
-    status: "in-stock",
-    owner_id: "USR002"
-  },
-  {
-    id: 6,
-    title: "Sunglass for Men",
-    category: "Gadget",
-    location: "Seattle",
-    price: 135,
-    availableFrom: new Date("2023-06-01"),
-    availableUntil: new Date("2023-09-30"),
-    vendorEmail: "eyewear@example.com",
-    status: "coming-soon",
-    owner_id: "USR003"
-  },
-  {
-    id: 7,
-    title: "Wireless Gaming Mouse",
-    category: "Electronic",
-    location: "Austin",
-    price: 155,
-    availableFrom: new Date("2023-07-15"),
-    availableUntil: new Date("2023-12-31"),
-    vendorEmail: "gaming@example.com",
-    status: "out-of-stock",
-    owner_id: "USR001"
-  },
-  {
-    id: 8,
-    title: "WIWU Airbuds Pro 2",
-    category: "Electronic",
-    location: "Boston",
-    price: 144,
-    availableFrom: new Date("2023-06-01"),
-    availableUntil: new Date("2023-11-30"),
-    vendorEmail: "audio@example.com",
-    status: "in-stock",
-    owner_id: "USR002"
-  },
-];
+import { Listing, mapApiResponseToListing, mapFormDataToApiRequest } from "@/types/listing";
+import { getToken } from "./authService";
 
-export type Listing = typeof mockListings[0];
+const API_URL = "https://rental-prime-backend.onrender.com/vendor_listing";
+
+// Create headers with the token from sessionStorage
+const getHeaders = () => {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    "Authorization": token ? `Bearer ${token}` : "",
+  };
+};
+
+// Custom error class for authentication errors
+export class AuthError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AuthError';
+  }
+}
+
+// Function to handle API response errors
+const handleApiResponse = async (response: Response, errorMessage: string): Promise<any> => {
+  if (response.ok) {
+    return response.json();
+  }
+
+  // Handle different error status codes
+  if (response.status === 401 || response.status === 403) {
+    console.error('Authentication error:', response.status);
+    throw new AuthError('Your session has expired or your authentication token is invalid.');
+  }
+
+  if (response.status === 404) {
+    console.error('Resource not found:', response.status);
+    throw new Error('The requested resource was not found.');
+  }
+
+  if (response.status === 500) {
+    console.error('Server error:', response.status);
+    throw new Error('A server error occurred. Please try again later.');
+  }
+
+  // Try to parse error message from response
+  try {
+    const errorData = await response.json();
+    console.error('API error:', errorData);
+    throw new Error(errorData.message || errorMessage);
+  } catch (e) {
+    // If we can't parse the JSON, just throw a generic error
+    console.error('Error parsing API error response:', e);
+    throw new Error(errorMessage);
+  }
+};
+
+// Get all listings
+export const getListings = async (): Promise<Listing[]> => {
+  try {
+    const response = await fetch(API_URL,{headers: getHeaders()});
+    const data = await handleApiResponse(response, 'Failed to fetch listings');
+
+    return Array.isArray(data)
+      ? data.map(mapApiResponseToListing)
+      : [];
+  } catch (error) {
+    console.error('Error in getListings function:', error);
+    throw error;
+  }
+};
+
+// Add a new listing
+export const addListing = async (listingData: {
+  title: string;
+  description: string;
+  price: number;
+  location: string;
+  category: string;
+  availableFrom: Date;
+  availableUntil: Date;
+  owner_id?: number;
+}): Promise<Listing> => {
+  try {
+    const apiData = mapFormDataToApiRequest(listingData);
+
+    const response = await fetch(`${API_URL}/listing`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(apiData),
+    });
+
+    const data = await handleApiResponse(response, 'Failed to create listing');
+    return mapApiResponseToListing(data);
+  } catch (error) {
+    console.error('Error in addListing function:', error);
+    throw error;
+  }
+};
+
+// Update an existing listing
+export const updateListing = async (
+  owner_id: number,
+  listing_id: number,
+  listingData: {
+    title: string;
+    description: string;
+    price: number;
+    location: string;
+    category: string;
+    availableFrom: Date;
+    availableUntil: Date;
+  }
+): Promise<Listing> => {
+  try {
+    const apiData = mapFormDataToApiRequest({
+      ...listingData,
+      owner_id
+    });
+
+    console.log('Updating listing with data:', {
+      endpoint: `${API_URL}/listing/${listing_id}`,
+      method: 'PATCH',
+      owner_id,
+      listing_id,
+      requestBody: apiData
+    });
+
+    // Using the correct format based on backend routes: /vendor_listing/listing/:listingId
+    const response = await fetch(`${API_URL}/listing/${listing_id}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(apiData),
+    });
+
+    console.log('Update response status:', response.status);
+
+    if (!response.ok) {
+      // Try to log the error response
+      try {
+        const errorText = await response.text();
+        console.error('Error response from API:', errorText);
+      } catch (e) {
+        console.error('Could not parse error response');
+      }
+    }
+
+    const data = await handleApiResponse(response, 'Failed to update listing');
+    return mapApiResponseToListing(data);
+  } catch (error) {
+    console.error('Error in updateListing function:', error);
+    throw error;
+  }
+};
+
+// Delete a listing
+export const deleteListing = async (id: number): Promise<boolean> => {
+  try {
+    const response = await fetch(`${API_URL}/listing/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+
+    if (response.ok) {
+      return true;
+    }
+
+    await handleApiResponse(response, 'Failed to delete listing');
+    return true;
+  } catch (error) {
+    console.error('Error in deleteListing function:', error);
+    throw error;
+  }
+};

@@ -9,29 +9,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-export interface Listing {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  location: string;
-  price: number;
-  availableFrom: Date;
-  availableUntil: Date;
-  vendorEmail: string;
-  status: "in-stock" | "out-stock" | "low-stock";
-  image?: string;
-  owner_id?: string; // Added owner_id field
-}
+import { Listing } from "@/types/listing";
 
 interface ListingsTableProps {
   listings: Listing[];
   onEdit: (listing: Listing) => void;
   onDelete: (id: number) => void;
+  isLoading?: boolean;
 }
 
-export function ListingsTable({ listings, onEdit, onDelete }: ListingsTableProps) {
+export function ListingsTable({ listings, onEdit, onDelete, isLoading = false }: ListingsTableProps) {
+  if (isLoading) {
+    return (
+      <div className="overflow-hidden rounded-md border">
+        <div className="flex justify-center items-center p-8">
+          <p>Loading listings...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-md border">
       <Table>
@@ -54,11 +51,11 @@ export function ListingsTable({ listings, onEdit, onDelete }: ListingsTableProps
             </TableRow>
           ) : (
             listings.map((listing) => (
-              <TableRow key={listing.id}>
+              <TableRow key={listing.listing_id}>
                 <TableCell className="font-medium flex items-center gap-3">
                   <div className="h-10 w-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                    <img 
-                      src={listing.image || "/placeholder.svg"} 
+                    <img
+                      src={listing.image || "/placeholder.svg"}
                       alt={listing.title}
                       className="h-full w-full object-cover"
                     />
@@ -87,7 +84,7 @@ export function ListingsTable({ listings, onEdit, onDelete }: ListingsTableProps
                   </Badge>
                 </TableCell>
                 <TableCell>{listing.category}</TableCell>
-                <TableCell>{listing.owner_id || "N/A"}</TableCell>
+                <TableCell>{listing.owner_id}</TableCell>
                 <TableCell className="text-right space-x-2">
                   <Button
                     onClick={() => onEdit(listing)}
@@ -99,7 +96,7 @@ export function ListingsTable({ listings, onEdit, onDelete }: ListingsTableProps
                     <span className="sr-only">Edit</span>
                   </Button>
                   <Button
-                    onClick={() => onDelete(listing.id)}
+                    onClick={() => onDelete(listing.listing_id)}
                     size="icon"
                     variant="ghost"
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"

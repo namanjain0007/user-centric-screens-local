@@ -1,11 +1,15 @@
 import { User } from "@/types";
+import { getToken } from "./authService";
 
 const API_URL = "https://rental-prime-backend.onrender.com/users";
-const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbl9pZCI6MSwiYWRtaW5fdXNlcl90eXBlIjoic3VwZXJfYWRtaW4iLCJpYXQiOjE3NDY4NTE5ODksImV4cCI6MTc0NjkzODM4OX0.ymRftH89QPHOxnZjeJccJNExHBNh_nh6yYkSd6kXlN0";
 
-const headers = {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${AUTH_TOKEN}`,
+// Create headers with the token from sessionStorage
+const getHeaders = () => {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    "Authorization": token ? `Bearer ${token}` : "",
+  };
 };
 
 // Custom error class for authentication errors
@@ -53,7 +57,7 @@ const handleApiResponse = async (response: Response, errorMessage: string): Prom
 export async function getUsers(): Promise<User[]> {
   try {
     // console.log('Fetching users...');
-    const response = await fetch(API_URL, { headers });
+    const response = await fetch(API_URL, { headers: getHeaders() });
 
     // Use our error handling function
     const users = await handleApiResponse(response, 'Failed to fetch users');
@@ -88,7 +92,7 @@ export async function createUser(userData: {
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify(userData),
     });
 
@@ -135,7 +139,7 @@ export async function deleteUser(id: string): Promise<void> {
     // Use the correct endpoint format based on your database schema
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
-      headers,
+      headers: getHeaders(),
     });
 
     console.log(`Delete response status: ${response.status}`);
@@ -145,7 +149,7 @@ export async function deleteUser(id: string): Promise<void> {
       console.log('First attempt failed, trying with query parameter...');
       const queryResponse = await fetch(`${API_URL}?user_id=${id}`, {
         method: 'DELETE',
-        headers,
+        headers: getHeaders(),
       });
 
       console.log(`Delete with query parameter response status: ${queryResponse.status}`);

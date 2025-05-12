@@ -1,12 +1,16 @@
 
 import { Category } from "../types/category";
+import { getToken } from "./authService";
 
 const API_URL = "https://rental-prime-backend.onrender.com/category";
-const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbl9pZCI6MSwiYWRtaW5fdXNlcl90eXBlIjoic3VwZXJfYWRtaW4iLCJpYXQiOjE3NDY4NTE5ODksImV4cCI6MTc0NjkzODM4OX0.ymRftH89QPHOxnZjeJccJNExHBNh_nh6yYkSd6kXlN0";
 
-const headers = {
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${AUTH_TOKEN}`,
+// Create headers with the token from sessionStorage
+const getHeaders = () => {
+  const token = getToken();
+  return {
+    "Content-Type": "application/json",
+    "Authorization": token ? `Bearer ${token}` : "",
+  };
 };
 
 // Custom error class for authentication errors
@@ -74,7 +78,7 @@ export const addCategory = async (name: string): Promise<Category> => {
   try {
     const response = await fetch(API_URL, {
       method: 'POST',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({ name }),
     });
 
@@ -106,7 +110,7 @@ export const updateCategory = async (id: number, name: string): Promise<Category
   try {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PATCH',
-      headers,
+      headers: getHeaders(),
       body: JSON.stringify({ name }),
     });
 
@@ -138,7 +142,7 @@ export const deleteCategory = async (id: number): Promise<boolean> => {
   try {
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'DELETE',
-      headers,
+      headers: getHeaders(),
     });
 
     if (response.ok) {
