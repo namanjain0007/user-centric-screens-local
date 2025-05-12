@@ -108,7 +108,9 @@ export default function PricingPlansPage() {
     name: string;
     price: number;
     duration_in_days: number;
+    available_listing: number;
   }) => {
+    // console.log('Received plan data in PricingPlansPage:', planData);
     try {
       if (currentPlan) {
         // Edit existing plan
@@ -117,7 +119,8 @@ export default function PricingPlansPage() {
           {
             name: planData.name,
             price: planData.price,
-            duration_in_days: planData.duration_in_days
+            duration_in_days: planData.duration_in_days,
+            available_listing: planData.available_listing
           }
         );
         setPlans(plans.map(p => (p.plan_id === updatedPlan.plan_id ? updatedPlan : p)));
@@ -130,7 +133,8 @@ export default function PricingPlansPage() {
         const newPlan = await addPricingPlan({
           name: planData.name,
           price: planData.price,
-          duration_in_days: planData.duration_in_days
+          duration_in_days: planData.duration_in_days,
+          available_listing: planData.available_listing
         });
         setPlans([...plans, newPlan]);
         toast({

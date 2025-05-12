@@ -3,8 +3,9 @@ export interface PricingPlan {
   name: string;
   price: number;
   duration_in_days: number;
-  created_at?: string;
-  updated_at?: string;
+  available_listing: number;
+  created_at: string;
+  updated_at: string;
 }
 
 // Helper function to convert duration_in_days to a human-readable format

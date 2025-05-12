@@ -16,6 +16,7 @@ interface PricingPlanModalProps {
     name: string;
     price: number;
     duration_in_days: number;
+    available_listing: number;
   }) => void;
   buttonVariant?: "default" | "outline" | "secondary" | "ghost" | "link" | "brand-purple";
 }
@@ -30,16 +31,19 @@ export function PricingPlanModal({
   const [name, setName] = useState(initialData?.name || "");
   const [price, setPrice] = useState(initialData?.price?.toString() || "");
   const [durationInDays, setDurationInDays] = useState<number>(initialData?.duration_in_days || 30);
+  const [availableListing, setAvailableListing] = useState<number>(initialData?.available_listing || 5);
 
   useEffect(() => {
     if (open && initialData) {
       setName(initialData.name || "");
       setPrice(initialData.price?.toString() || "");
       setDurationInDays(initialData.duration_in_days || 30);
+      setAvailableListing(initialData.available_listing || 5);
     } else if (!open) {
       setName("");
       setPrice("");
       setDurationInDays(30);
+      setAvailableListing(5);
     }
   }, [open, initialData]);
 
@@ -49,7 +53,9 @@ export function PricingPlanModal({
       name,
       price: parseFloat(price),
       duration_in_days: durationInDays,
+      available_listing: availableListing,
     };
+    // console.log('Submitting plan data from modal:', planData);
     onSubmit(planData);
   };
 
@@ -101,6 +107,25 @@ export function PricingPlanModal({
                 <SelectItem key="quarterly" value="90">Quarterly (90 days)</SelectItem>
                 <SelectItem key="six-month" value="180">Six Month (180 days)</SelectItem>
                 <SelectItem key="yearly" value="365">Yearly (365 days)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="availableListings">Available Listings</Label>
+            <Select
+              value={availableListing.toString()}
+              onValueChange={(value) => setAvailableListing(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select available listings" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5 Listings</SelectItem>
+                <SelectItem value="10">10 Listings</SelectItem>
+                <SelectItem value="15">15 Listings</SelectItem>
+                <SelectItem value="20">20 Listings</SelectItem>
+                <SelectItem value="25">25 Listings</SelectItem>
               </SelectContent>
             </Select>
           </div>

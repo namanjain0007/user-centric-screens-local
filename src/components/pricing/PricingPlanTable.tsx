@@ -28,13 +28,14 @@ export function PricingPlanTable({ plans, onEdit, onDelete }: PricingPlanTablePr
           <TableHead>Plan Name</TableHead>
           <TableHead>Price/month</TableHead>
           <TableHead>Duration</TableHead>
+          <TableHead>Available Listing</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {plans.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center py-10 text-muted-foreground">
+            <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
               No pricing plans found
             </TableCell>
           </TableRow>
@@ -61,6 +62,14 @@ export function PricingPlanTable({ plans, onEdit, onDelete }: PricingPlanTablePr
                   }
                 >
                   {formatDuration(plan.duration_in_days)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className="bg-brand-blue/10 text-brand-blue border-brand-blue/20"
+                >
+                  {plan.available_listing || 5} Listings
                 </Badge>
               </TableCell>
               <TableCell className="text-right">

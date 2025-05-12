@@ -59,12 +59,14 @@ export const getPricingPlans = async (): Promise<PricingPlan[]> => {
   try {
     const response = await fetch(API_URL, { headers: getHeaders() });
     const data = await handleApiResponse(response, 'Failed to fetch pricing plans');
+    // console.log('API response data:', data);
 
     return data.map((plan: any) => ({
       plan_id: plan.plan_id,
       name: plan.name,
       price: plan.price,
       duration_in_days: plan.duration_in_days,
+      available_listing: plan.available_listing ,
       created_at: plan.created_at,
       updated_at: plan.updated_at
     }));
@@ -79,13 +81,16 @@ export const addPricingPlan = async (planData: {
   name: string;
   price: number;
   duration_in_days: number;
+  available_listing: number;
 }): Promise<PricingPlan> => {
   try {
+    // console.log('Adding pricing plan with data:', planData);
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(planData),
     });
+    // console.log('API response:', planData);
 
     const data = await handleApiResponse(response, 'Failed to create pricing plan');
 
@@ -94,6 +99,7 @@ export const addPricingPlan = async (planData: {
       name: data.name,
       price: data.price,
       duration_in_days: data.duration_in_days,
+      available_listing: data.available_listing ,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
@@ -119,9 +125,11 @@ export const updatePricingPlan = async (
     name: string;
     price: number;
     duration_in_days: number;
+    available_listing: number;
   }
 ): Promise<PricingPlan> => {
   try {
+    // console.log('Updating pricing plan with data:', { id, planData });
     const response = await fetch(`${API_URL}/${id}`, {
       method: 'PATCH',
       headers: getHeaders(),
@@ -135,6 +143,7 @@ export const updatePricingPlan = async (
       name: data.name,
       price: data.price,
       duration_in_days: data.duration_in_days,
+      available_listing: data.available_listing ,
       created_at: data.created_at,
       updated_at: data.updated_at
     };
