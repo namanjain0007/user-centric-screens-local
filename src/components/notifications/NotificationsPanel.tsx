@@ -19,6 +19,10 @@ interface NotificationItem {
   title: string;
   date: string;
   time: string;
+  sender_id: number;
+  sender_type: string;
+  receiver_id: number;
+  receiver_type: string;
   user?: {
     name: string;
     avatar?: string;
@@ -35,31 +39,74 @@ export function NotificationsPanel({ onClose }: NotificationsPanelProps) {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        console.log('NotificationsPanel: Starting to fetch notifications');
         setIsLoading(true);
+
         const data = await getNotifications();
+        console.log('NotificationsPanel: Received notifications data:', data);
+
+        if (!data || data.length === 0) {
+          console.log('NotificationsPanel: No notifications data received');
+          setNotifications([]);
+          return;
+        }
 
         // Map API notifications to display format
+        console.log('NotificationsPanel: Mapping notifications data to display format');
         const displayNotifications = data.map((notification): NotificationItem => {
-          const { date, time } = formatNotificationDate(notification.created_at);
+          try {
+            console.log('NotificationsPanel: Mapping notification:', notification);
 
-          // Extract title from message or use type as fallback
-          const title = notification.type.charAt(0).toUpperCase() + notification.type.slice(1);
+            const { date, time } = formatNotificationDate(notification.created_at);
+            console.log('NotificationsPanel: Formatted date:', date, time);
 
-          return {
-            id: notification.id,
-            type: notification.type,
-            title: notification.message,
-            date,
-            time,
-            isUnread: !notification.is_read,
-            // We don't have user info in the notification API response
-            user: undefined
-          };
+            // Extract title from message or use type as fallback
+            const title = notification.type.charAt(0).toUpperCase() + notification.type.slice(1);
+
+            // Create a display notification
+            const displayNotification = {
+              id: notification.id,
+              type: notification.type,
+              title: notification.message,
+              date,
+              time,
+              sender_id: notification.sender_id,
+              sender_type: notification.sender_type,
+              receiver_id: notification.receiver_id,
+              receiver_type: notification.receiver_type,
+              isUnread: !notification.is_read,
+              // Now we have sender info in the notification API response
+              user: {
+                name: `${notification.sender_type} #${notification.sender_id}`, // Placeholder, ideally fetch real name
+                avatar: undefined // Placeholder, ideally fetch real avatar
+              }
+            };
+
+            console.log('NotificationsPanel: Created display notification:', displayNotification);
+            return displayNotification;
+          } catch (err) {
+            console.error('NotificationsPanel: Error mapping individual notification:', err, notification);
+            // Return a default notification if mapping fails
+            return {
+              id: 0,
+              type: 'error',
+              title: 'Error processing notification',
+              date: new Date().toLocaleDateString(),
+              time: new Date().toLocaleTimeString(),
+              sender_id: 0,
+              sender_type: 'System',
+              receiver_id: 0,
+              receiver_type: 'System',
+              isUnread: false,
+              user: undefined
+            };
+          }
         });
 
+        console.log('NotificationsPanel: Final display notifications:', displayNotifications);
         setNotifications(displayNotifications);
       } catch (error) {
-        console.error('Failed to fetch notifications:', error);
+        console.error('NotificationsPanel: Failed to fetch notifications:', error);
         toast.error('Failed to load notifications');
       } finally {
         setIsLoading(false);
@@ -261,6 +308,14 @@ function NotificationCard({
       {/* Content */}
       <div className="flex-1">
         <p className="text-sm">{notification.title}</p>
+        <div className="flex flex-wrap gap-2 mt-1">
+          <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+            From: {notification.sender_type} #{notification.sender_id}
+          </span>
+          <span className="text-xs px-2 py-0.5 bg-green-100 text-green-800 rounded-full">
+            To: {notification.receiver_type} #{notification.receiver_id}
+          </span>
+        </div>
         <p className="mt-1 text-xs text-muted-foreground">
           {notification.date} • {notification.time}
         </p>
